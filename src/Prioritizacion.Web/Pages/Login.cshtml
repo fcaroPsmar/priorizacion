@@ -1,0 +1,26 @@
+@page
+@model LoginModel
+@{
+  ViewData["Title"] = "Acceso";
+}
+
+<div class="card">
+  <h1>Acceso</h1>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Error))
+  {
+    <div class="alert">@Model.Error</div>
+  }
+
+  <form method="post" class="form">
+    <label class="label">Correo electrónico</label>
+    <input class="input" type="email" name="Email" value="@Model.Email" autocomplete="email" required />
+
+    <label class="label">Código</label>
+    <input class="input" type="text" name="Codigo" value="@Model.Codigo" autocomplete="one-time-code" required />
+
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+
+  <p class="muted small">Si el código ha caducado o la convocatoria está cerrada, no podrás acceder.</p>
+</div>

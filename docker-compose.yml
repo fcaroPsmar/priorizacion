@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: hdm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: priorizacion
+      POSTGRES_USER: priorizacion_user
+      POSTGRES_PASSWORD: priorizacion_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_hdm:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+  web:
+    build:
+      context: ./src/Prioritizacion.Web
+      dockerfile: Dockerfile
+    container_name: hdm-web
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=priorizacion;Username=priorizacion_user;Password=priorizacion_pass
+      Auth__SessionCookieName: hdm_priorizacion_session
+      Admin__Password: CHANGE_ME
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata_hdm:

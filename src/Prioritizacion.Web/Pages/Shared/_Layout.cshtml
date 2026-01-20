@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] - Priorización</title>
+  <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+  <header class="hdm-header">
+    <div class="hdm-header__inner">
+      <img class="hdm-logo" src="~/img/icon_hmar.JPG" alt="Hospital del Mar" />
+      <div class="hdm-title">
+        <div class="hdm-title__main">Priorizació</div>
+        <div class="hdm-title__sub">Hospital del Mar</div>
+      </div>
+      <div class="hdm-header__right">
+        @if (User?.Identity?.IsAuthenticated == true)
+        {
+          <span class="hdm-user">@User.Identity.Name</span>
+          <a class="hdm-link" href="/Logout">Salir</a>
+        }
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    @RenderBody()
+  </main>
+
+  @RenderSection("Scripts", required: false)
+</body>
+</html>
