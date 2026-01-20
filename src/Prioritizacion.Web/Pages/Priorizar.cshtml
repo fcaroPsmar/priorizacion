@@ -1,0 +1,50 @@
+@page
+@model PriorizarModel
+@{
+  ViewData["Title"] = "Priorizar";
+}
+
+<div class="card">
+  <h1>Prioriza tus plazas</h1>
+
+  @if (!string.IsNullOrWhiteSpace(Model.Success))
+  {
+    <div class="success">@Model.Success</div>
+  }
+  @if (!string.IsNullOrWhiteSpace(Model.Error))
+  {
+    <div class="alert">@Model.Error</div>
+  }
+
+  <p class="muted">Arrastra y suelta para subir/bajar plazas. El número se actualiza automáticamente.</p>
+
+  <form method="post">
+    <input type="hidden" id="orderedIds" name="OrderedIds" value="@Model.OrderedIds" />
+
+    <ul id="plazas-list" class="plazas">
+      @foreach (var it in Model.Items)
+      {
+        <li class="plaza" draggable="true" data-plaza-id="@it.PlazaId">
+          <span class="order-badge">@it.Orden</span>
+          <div class="plaza-body">
+            <div class="plaza-title">@it.Titulo</div>
+            <div class="plaza-sub">@it.Centre</div>
+          </div>
+          <span class="drag-handle" title="Arrastrar">↕</span>
+        </li>
+      }
+    </ul>
+
+    <div class="actions">
+      <button class="btn" type="submit" asp-page-handler="Guardar">Guardar</button>
+      <button class="btn secondary" type="submit" asp-page-handler="Reiniciar">Reiniciar</button>
+      <button class="btn danger" type="submit" asp-page-handler="Enviar" onclick="return confirm('¿Enviar definitivamente? Después no podrás volver a entrar.');">Enviar</button>
+    </div>
+
+    <p class="muted small">Guardar y Reiniciar solo funcionan mientras la convocatoria esté abierta. Enviar cierra tu participación.</p>
+  </form>
+</div>
+
+@section Scripts {
+  <script src="~/js/priorizar.js"></script>
+}

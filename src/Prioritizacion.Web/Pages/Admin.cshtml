@@ -1,0 +1,36 @@
+@page
+@model AdminModel
+@{
+  ViewData["Title"] = "Admin";
+}
+
+<div class="card">
+  <h1>Panel de administración (borrador)</h1>
+
+  @if (!Model.IsAuthed)
+  {
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+      <div class="alert">@Model.Error</div>
+    }
+
+    <form method="post" class="form">
+      <label class="label">Contraseña de admin</label>
+      <input class="input" type="password" name="Password" required />
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+
+    <p class="muted small">Configura la contraseña en appsettings.json o variable de entorno <code>Admin__Password</code>.</p>
+  }
+  else
+  {
+    <div class="success">Acceso concedido.</div>
+    <p class="muted">Este panel es un placeholder para lo siguiente:</p>
+    <ul>
+      <li>Crear/abrir/cerrar convocatorias (acceso_desde / acceso_hasta)</li>
+      <li>Generar tokens por aspirante</li>
+      <li>Importar Excel/CSV de aspirantes, plazas y asignaciones</li>
+      <li>Exportar la vista <code>vw_priorizacion_lista</code> para el algoritmo</li>
+    </ul>
+  }
+</div>
