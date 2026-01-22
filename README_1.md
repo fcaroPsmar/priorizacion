@@ -8,10 +8,10 @@
   - **Reiniciar**: pone `orden_usuario = NULL` (vuelve a orden por defecto)
   - **Enviar**: marca `enviado_en` y revoca los tokens (no se puede volver a entrar)
 - PostgreSQL en Docker con inicialización automática del esquema (DDL)
-- Placeholder de **panel admin** (`/Admin`) para la siguiente fase
+- Panel **admin** (`/Admin`) protegido con Entra ID (OIDC)
 
 ## Arranque (Docker)
-1. Edita `docker-compose.yml` y cambia `Admin__Password`.
+1. Edita `docker-compose.yml` y configura `AdminEntra__ClientSecret`.
 2. Levanta el stack:
 
 ```bash
@@ -34,7 +34,12 @@ docker exec -it hdm-postgres psql -U priorizacion_user -d priorizacion
 En App Service / Container Apps, define:
 - `ConnectionStrings__Default`
 - `Auth__SessionCookieName`
-- `Admin__Password`
+- `AdminEntra__Instance` (ej. `https://login.microsoftonline.com/`)
+- `AdminEntra__TenantId`
+- `AdminEntra__ClientId`
+- `AdminEntra__ClientSecret`
+- `AdminEntra__CallbackPath` (ej. `/admin/signin-oidc`)
+- `AdminEntra__SignedOutCallbackPath` (ej. `/admin/signout-callback-oidc`)
 
 Ejemplo:
 `Host=postgres;Port=5432;Database=priorizacion;Username=priorizacion_user;Password=priorizacion_pass`
