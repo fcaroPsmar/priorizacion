@@ -5,6 +5,9 @@
 }
 
 <section class="admin">
+  <form class="admin-anti-forgery" method="post">
+    @Html.AntiForgeryToken()
+  </form>
   <nav class="admin-tabs" aria-label="Secciones del panel de administración">
     <button class="admin-tab is-active" type="button">
       <span class="admin-tab__icon" aria-hidden="true">
@@ -154,28 +157,20 @@
 
 @section Scripts {
   <script>
-    const convocatorias = [
-      {
-        id: 1,
-        code: "CONV-2026-001",
-        name: "Convocatoria Enfermería 2026",
-        startDate: "2026-02-01",
-        endDate: "2026-06-30",
-        active: "Sí",
-        accessFrom: "2026-02-01",
-        accessTo: "2026-03-15"
-      },
-      {
-        id: 2,
-        code: "CONV-2026-002",
-        name: "Convocatoria Médicos Residentes 2026",
-        startDate: "2026-03-01",
-        endDate: "2026-08-31",
-        active: "Sí",
-        accessFrom: "2026-03-01",
-        accessTo: "2026-04-15"
-      }
-    ];
+    const rawConvocatorias = @Html.Raw(Model.ConvocatoriasJson);
+    const formatDate = (value) => (value ? String(value).split("T")[0] : "");
+    const normalizeActive = (value) => (value ? "Sí" : "No");
+    const mapConvocatoria = (item) => ({
+      id: item.id,
+      code: item.codigo,
+      name: item.nombre,
+      startDate: formatDate(item.fechaInicio),
+      endDate: formatDate(item.fechaFin),
+      active: normalizeActive(item.activa),
+      accessFrom: formatDate(item.accesoDesde),
+      accessTo: formatDate(item.accesoHasta)
+    });
+    const convocatorias = rawConvocatorias.map(mapConvocatoria);
 
     const filters = {
       code: "",
@@ -211,6 +206,25 @@
     let editingId = null;
 
     const normalize = (value) => String(value ?? "").toLowerCase();
+    const csrfToken = document.querySelector("input[name='__RequestVerificationToken']").value;
+
+    const postJson = async (handler, payload) => {
+      const response = await fetch(`?handler=${handler}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "RequestVerificationToken": csrfToken
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Error al guardar la convocatoria.");
+      }
+
+      return response.json();
+    };
 
     const applyFilters = () =>
       convocatorias.filter((row) =>
@@ -329,8 +343,16 @@
 
       if (action === "delete") {
         if (confirm("¿Quieres eliminar esta convocatoria?")) {
-          convocatorias.splice(rowIndex, 1);
-          renderTable();
+          postJson("Delete", { id })
+            .then((result) => {
+              if (!result.ok) {
+                alert("No se pudo eliminar la convocatoria.");
+                return;
+              }
+              convocatorias.splice(rowIndex, 1);
+              renderTable();
+            })
+            .catch((error) => alert(error.message));
         }
         return;
       }
@@ -352,28 +374,35 @@
       }
 
       const payload = {
-        code: formCode.value.trim(),
-        name: formName.value.trim(),
-        startDate: formStartDate.value,
-        endDate: formEndDate.value,
-        active: formActive.value,
-        accessFrom: formAccessFrom.value,
-        accessTo: formAccessTo.value
+        id: editingId,
+        codigo: formCode.value.trim(),
+        nombre: formName.value.trim(),
+        fechaInicio: formStartDate.value || null,
+        fechaFin: formEndDate.value || null,
+        activa: formActive.value === "Sí",
+        accesoDesde: formAccessFrom.value || null,
+        accesoHasta: formAccessTo.value || null
       };
 
-      if (editingId) {
-        const rowIndex = convocatorias.findIndex((row) => row.id === editingId);
-        if (rowIndex !== -1) {
-          convocatorias[rowIndex] = { ...convocatorias[rowIndex], ...payload };
-        }
-      } else {
-        const nextId = Math.max(0, ...convocatorias.map((row) => row.id)) + 1;
-        convocatorias.unshift({ id: nextId, ...payload });
-        pageState.currentPage = 1;
-      }
+      const handler = editingId ? "Update" : "Create";
 
-      closeForm();
-      renderTable();
+      try {
+        const result = await postJson(handler, payload);
+        const mapped = mapConvocatoria(result);
+        if (editingId) {
+          const rowIndex = convocatorias.findIndex((row) => row.id === editingId);
+          if (rowIndex !== -1) {
+            convocatorias[rowIndex] = mapped;
+          }
+        } else {
+          convocatorias.unshift(mapped);
+          pageState.currentPage = 1;
+        }
+        closeForm();
+        renderTable();
+      } catch (error) {
+        alert(error.message);
+      }
     });
 
     cancelButton.addEventListener("click", () => {
