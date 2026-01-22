@@ -4,17 +4,392 @@
   ViewData["Title"] = "Admin";
 }
 
-<div class="card">
-  <h1>Panel de administración (borrador)</h1>
+<section class="admin">
+  <nav class="admin-tabs" aria-label="Secciones del panel de administración">
+    <button class="admin-tab is-active" type="button">
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <line x1="8" y1="3" x2="8" y2="21" />
+          <line x1="3" y1="8" x2="21" y2="8" />
+        </svg>
+      </span>
+      Convocatorias
+    </button>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c1.7-3.5 5-5 8-5s6.3 1.5 8 5" />
+        </svg>
+      </span>
+      Aspirantes
+    </button>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l4 8h-8l4-8z" />
+          <circle cx="12" cy="16" r="6" />
+        </svg>
+      </span>
+      Aspirante-Plaza
+    </button>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5" />
+          <path d="M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6" />
+        </svg>
+      </span>
+      Importar/Exportar
+    </button>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="19" x2="20" y2="19" />
+          <rect x="6" y="11" width="3" height="6" rx="1" />
+          <rect x="11" y="7" width="3" height="10" rx="1" />
+          <rect x="16" y="4" width="3" height="13" rx="1" />
+        </svg>
+      </span>
+      Reportes
+    </button>
+  </nav>
 
-  <div class="success">Acceso concedido.</div>
-  <p class="muted">Usuario autenticado: <strong>@(User.Identity?.Name ?? "Sin nombre")</strong></p>
-  <p class="muted">Este panel es un placeholder para lo siguiente:</p>
-  <ul>
-    <li>Crear/abrir/cerrar convocatorias (acceso_desde / acceso_hasta)</li>
-    <li>Generar tokens por aspirante</li>
-    <li>Importar Excel/CSV de aspirantes, plazas y asignaciones</li>
-    <li>Exportar la vista <code>vw_priorizacion_lista</code> para el algoritmo</li>
-  </ul>
-  <a class="btn" href="/AdminLogout">Cerrar sesión admin</a>
-</div>
+  <div class="admin-panel card">
+    <div class="admin-panel__header">
+      <div>
+        <h1>Gestión de Convocatorias</h1>
+        <p class="muted">Administra las convocatorias activas y sus ventanas de acceso.</p>
+      </div>
+      <button class="btn admin-create" type="button" id="createConvocatoria">
+        <span class="admin-create__icon" aria-hidden="true">＋</span>
+        Crear Convocatoria
+      </button>
+    </div>
+
+    <form class="admin-form is-hidden" id="convocatoriaForm">
+      <div class="admin-form__grid">
+        <label class="admin-form__field">
+          <span>Código</span>
+          <input type="text" id="formCode" placeholder="CONV-2026-003" required />
+        </label>
+        <label class="admin-form__field">
+          <span>Nombre</span>
+          <input type="text" id="formName" placeholder="Nombre de la convocatoria" required />
+        </label>
+        <label class="admin-form__field">
+          <span>Fecha inicio</span>
+          <input type="date" id="formStartDate" />
+        </label>
+        <label class="admin-form__field">
+          <span>Fecha fin</span>
+          <input type="date" id="formEndDate" />
+        </label>
+        <label class="admin-form__field">
+          <span>Activa</span>
+          <select id="formActive">
+            <option value="Sí">Sí</option>
+            <option value="No">No</option>
+          </select>
+        </label>
+        <label class="admin-form__field">
+          <span>Acceso desde</span>
+          <input type="date" id="formAccessFrom" />
+        </label>
+        <label class="admin-form__field">
+          <span>Acceso hasta</span>
+          <input type="date" id="formAccessTo" />
+        </label>
+      </div>
+      <div class="admin-form__actions">
+        <button class="btn" type="submit" id="saveConvocatoria">Guardar</button>
+        <button class="btn secondary" type="button" id="cancelConvocatoria">Cancelar</button>
+      </div>
+    </form>
+
+    <div class="admin-table__wrapper">
+      <table class="admin-table" aria-label="Tabla de convocatorias">
+        <thead>
+          <tr>
+            <th>CÓDIGO</th>
+            <th>NOMBRE</th>
+            <th>FECHA INICIO</th>
+            <th>FECHA FIN</th>
+            <th>ACTIVA</th>
+            <th>ACCESO DESDE</th>
+            <th>ACCESO HASTA</th>
+            <th>ACCIONES</th>
+          </tr>
+          <tr class="admin-table__filters">
+            <th><input class="admin-filter" data-field="code" type="text" placeholder="Filtrar código..." /></th>
+            <th><input class="admin-filter" data-field="name" type="text" placeholder="Filtrar nombre..." /></th>
+            <th><input class="admin-filter" data-field="startDate" type="text" placeholder="Filtrar fecha inicio..." /></th>
+            <th><input class="admin-filter" data-field="endDate" type="text" placeholder="Filtrar fecha fin..." /></th>
+            <th><input class="admin-filter" data-field="active" type="text" placeholder="Filtrar activa..." /></th>
+            <th><input class="admin-filter" data-field="accessFrom" type="text" placeholder="Filtrar acceso desde..." /></th>
+            <th><input class="admin-filter" data-field="accessTo" type="text" placeholder="Filtrar acceso hasta..." /></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="convocatoriasBody"></tbody>
+      </table>
+    </div>
+
+    <div class="admin-table__footer">
+      <span class="admin-table__summary" id="convocatoriasSummary">Mostrando 0 a 0 de 0 resultados</span>
+      <div class="admin-pagination" role="navigation" aria-label="Paginación">
+        <button class="admin-page" type="button" id="prevPage" aria-label="Página anterior">
+          <span aria-hidden="true">‹</span>
+        </button>
+        <button class="admin-page is-active" type="button" id="currentPage">1</button>
+        <button class="admin-page" type="button" id="nextPage" aria-label="Página siguiente">
+          <span aria-hidden="true">›</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+@section Scripts {
+  <script>
+    const convocatorias = [
+      {
+        id: 1,
+        code: "CONV-2026-001",
+        name: "Convocatoria Enfermería 2026",
+        startDate: "2026-02-01",
+        endDate: "2026-06-30",
+        active: "Sí",
+        accessFrom: "2026-02-01",
+        accessTo: "2026-03-15"
+      },
+      {
+        id: 2,
+        code: "CONV-2026-002",
+        name: "Convocatoria Médicos Residentes 2026",
+        startDate: "2026-03-01",
+        endDate: "2026-08-31",
+        active: "Sí",
+        accessFrom: "2026-03-01",
+        accessTo: "2026-04-15"
+      }
+    ];
+
+    const filters = {
+      code: "",
+      name: "",
+      startDate: "",
+      endDate: "",
+      active: "",
+      accessFrom: "",
+      accessTo: ""
+    };
+
+    const pageState = {
+      pageSize: 5,
+      currentPage: 1
+    };
+
+    const body = document.getElementById("convocatoriasBody");
+    const summary = document.getElementById("convocatoriasSummary");
+    const currentPage = document.getElementById("currentPage");
+    const prevPage = document.getElementById("prevPage");
+    const nextPage = document.getElementById("nextPage");
+    const form = document.getElementById("convocatoriaForm");
+    const saveButton = document.getElementById("saveConvocatoria");
+    const cancelButton = document.getElementById("cancelConvocatoria");
+    const createButton = document.getElementById("createConvocatoria");
+    const formCode = document.getElementById("formCode");
+    const formName = document.getElementById("formName");
+    const formStartDate = document.getElementById("formStartDate");
+    const formEndDate = document.getElementById("formEndDate");
+    const formActive = document.getElementById("formActive");
+    const formAccessFrom = document.getElementById("formAccessFrom");
+    const formAccessTo = document.getElementById("formAccessTo");
+    let editingId = null;
+
+    const normalize = (value) => String(value ?? "").toLowerCase();
+
+    const applyFilters = () =>
+      convocatorias.filter((row) =>
+        Object.entries(filters).every(([key, value]) =>
+          normalize(row[key]).includes(normalize(value))
+        )
+      );
+
+    const renderTable = () => {
+      const filtered = applyFilters();
+      const totalPages = Math.max(1, Math.ceil(filtered.length / pageState.pageSize));
+      pageState.currentPage = Math.min(pageState.currentPage, totalPages);
+
+      const startIndex = (pageState.currentPage - 1) * pageState.pageSize;
+      const pageRows = filtered.slice(startIndex, startIndex + pageState.pageSize);
+
+      body.innerHTML = pageRows
+        .map((row) =>
+          `
+            <tr>
+              <td>${row.code}</td>
+              <td>${row.name}</td>
+              <td>${row.startDate}</td>
+              <td>${row.endDate}</td>
+              <td><span class="status-badge">${row.active}</span></td>
+              <td>${row.accessFrom}</td>
+              <td>${row.accessTo}</td>
+              <td>
+                <div class="admin-actions">
+                  <button class="admin-action" type="button" data-action="edit" data-id="${row.id}" aria-label="Editar convocatoria">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </button>
+                  <button class="admin-action is-danger" type="button" data-action="delete" data-id="${row.id}" aria-label="Eliminar convocatoria">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `
+        )
+        .join("");
+
+      if (!pageRows.length) {
+        body.innerHTML = `<tr><td colspan="8" class="admin-empty">No hay resultados con esos filtros.</td></tr>`;
+      }
+
+      const startLabel = filtered.length ? startIndex + 1 : 0;
+      const endLabel = startIndex + pageRows.length;
+      summary.textContent = `Mostrando ${startLabel} a ${endLabel} de ${filtered.length} resultados`;
+      currentPage.textContent = pageState.currentPage;
+      prevPage.disabled = pageState.currentPage === 1;
+      nextPage.disabled = pageState.currentPage === totalPages;
+    };
+
+    const resetForm = () => {
+      form.reset();
+      formActive.value = "Sí";
+      editingId = null;
+    };
+
+    const openForm = (row) => {
+      form.classList.remove("is-hidden");
+      if (row) {
+        formCode.value = row.code;
+        formName.value = row.name;
+        formStartDate.value = row.startDate;
+        formEndDate.value = row.endDate;
+        formActive.value = row.active;
+        formAccessFrom.value = row.accessFrom;
+        formAccessTo.value = row.accessTo;
+        editingId = row.id;
+        saveButton.textContent = "Actualizar";
+      } else {
+        resetForm();
+        saveButton.textContent = "Guardar";
+      }
+    };
+
+    const closeForm = () => {
+      form.classList.add("is-hidden");
+      resetForm();
+    };
+
+    const updateFilter = (event) => {
+      const input = event.target;
+      filters[input.dataset.field] = input.value;
+      pageState.currentPage = 1;
+      renderTable();
+    };
+
+    document.querySelectorAll(".admin-filter").forEach((input) => {
+      input.addEventListener("input", updateFilter);
+    });
+
+    body.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) {
+        return;
+      }
+
+      const action = button.dataset.action;
+      const id = Number(button.dataset.id);
+      const rowIndex = convocatorias.findIndex((row) => row.id === id);
+      if (rowIndex === -1) {
+        return;
+      }
+
+      if (action === "delete") {
+        if (confirm("¿Quieres eliminar esta convocatoria?")) {
+          convocatorias.splice(rowIndex, 1);
+          renderTable();
+        }
+        return;
+      }
+
+      if (action === "edit") {
+        openForm(convocatorias[rowIndex]);
+      }
+    });
+
+    createButton.addEventListener("click", () => {
+      openForm();
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!formCode.value.trim() || !formName.value.trim()) {
+        alert("Código y nombre son obligatorios.");
+        return;
+      }
+
+      const payload = {
+        code: formCode.value.trim(),
+        name: formName.value.trim(),
+        startDate: formStartDate.value,
+        endDate: formEndDate.value,
+        active: formActive.value,
+        accessFrom: formAccessFrom.value,
+        accessTo: formAccessTo.value
+      };
+
+      if (editingId) {
+        const rowIndex = convocatorias.findIndex((row) => row.id === editingId);
+        if (rowIndex !== -1) {
+          convocatorias[rowIndex] = { ...convocatorias[rowIndex], ...payload };
+        }
+      } else {
+        const nextId = Math.max(0, ...convocatorias.map((row) => row.id)) + 1;
+        convocatorias.unshift({ id: nextId, ...payload });
+        pageState.currentPage = 1;
+      }
+
+      closeForm();
+      renderTable();
+    });
+
+    cancelButton.addEventListener("click", () => {
+      closeForm();
+    });
+
+    prevPage.addEventListener("click", () => {
+      pageState.currentPage = Math.max(1, pageState.currentPage - 1);
+      renderTable();
+    });
+
+    nextPage.addEventListener("click", () => {
+      pageState.currentPage += 1;
+      renderTable();
+    });
+
+    renderTable();
+  </script>
+}
