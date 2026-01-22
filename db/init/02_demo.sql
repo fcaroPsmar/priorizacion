@@ -1,44 +1,103 @@
--- Datos demo (opcional). Se ejecuta la primera vez que se crea el volumen de Postgres.
 
-insert into convocatoria (codigo, nombre, activa, acceso_desde, acceso_hasta)
-values ('DEMO-2026', 'Convocatoria demo 2026', true, now() - interval '1 day', now() + interval '7 days')
+-- =========================================================
+-- SEED DEMO AZURE POSTGRES
+-- 1 convocatoria
+-- 3 aspirantes
+-- 200 plazas
+-- =========================================================
+
+-- =========================
+-- IDS FIJOS
+-- =========================
+-- Convocatoria
+-- aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+
+-- Aspirantes
+-- bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+-- cccccccc-cccc-cccc-cccc-cccccccccccc
+-- dddddddd-dddd-dddd-dddd-dddddddddddd
+
+-- =========================
+-- CONVOCATORIA
+-- =========================
+insert into convocatoria (
+  id, codigo, nombre, activa,
+  acceso_desde, acceso_hasta
+)
+values (
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'DEMO-2026',
+  'Convocatoria DEMO 2026 – Stress 200 plazas',
+  true,
+  now() - interval '1 day',
+  now() + interval '15 days'
+)
 on conflict (codigo) do nothing;
 
-with c as (
-  select id from convocatoria where codigo = 'DEMO-2026'
-)
-insert into aspirante (convocatoria_id, email, nombre)
-select c.id, 'demo@hospitalmar.cat', 'Aspirante Demo'
-from c
+-- =========================
+-- ASPIRANTES (3)
+-- =========================
+insert into aspirante (id, convocatoria_id, email, nombre)
+values
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'demo1@hospitalmar.cat', 'Aspirante Demo 1'),
+  ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'demo2@hospitalmar.cat', 'Aspirante Demo 2'),
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'demo3@hospitalmar.cat', 'Aspirante Demo 3')
 on conflict (convocatoria_id, email) do nothing;
 
-with a as (
-  select id from aspirante where email = 'demo@hospitalmar.cat'
+-- =========================
+-- TOKENS
+-- =========================
+insert into aspirante_token (
+  id, aspirante_id, codigo, expira_en
 )
-insert into aspirante_token (aspirante_id, codigo, expira_en)
-select a.id, 'DEMO1234', now() + interval '30 days'
-from a
+values
+  ('11111111-0000-0000-0000-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'TOKEN-DEMO-1', now() + interval '15 days'),
+  ('11111111-0000-0000-0000-000000000002', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'TOKEN-DEMO-2', now() + interval '15 days'),
+  ('11111111-0000-0000-0000-000000000003', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'TOKEN-DEMO-3', now() + interval '15 days')
 on conflict (codigo) do nothing;
 
--- Plazas (200)
-with c as (
-  select id from convocatoria where codigo = 'DEMO-2026'
+-- =========================
+-- PLAZAS (200)
+-- =========================
+insert into plaza (
+  id,
+  convocatoria_id,
+  base,
+  posicion,
+  centro,
+  descripcion,
+  activa
 )
-insert into plaza (convocatoria_id, base, posicion, centro)
 select
-  c.id,
-  'DEMO-BASE',
-  gs::text as posicion,
-  ('Centre ' || gs::text) as centro
-from c
-cross join generate_series(1, 200) as gs
-on conflict do nothing;
+  ('eeeeeeee-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'A1',
+  'P' || lpad(i::text, 3, '0'),
+  'Hospital del Mar',
+  'Plaza demo número ' || i,
+  true
+from generate_series(1, 200) as i
+on conflict (convocatoria_id, base, posicion) do nothing;
 
--- Asignación + orden por defecto
-with a as (select id from aspirante where email='demo@hospitalmar.cat'),
-     p as (select id, row_number() over (order by posicion::int) as rn from plaza where base='DEMO-BASE')
-insert into aspirante_plaza (aspirante_id, plaza_id, orden_defecto)
-select a.id, p.id, p.rn
-from a cross join p
+-- =========================
+-- ASPIRANTE_PLAZA (600 filas)
+-- =========================
+insert into aspirante_plaza (
+  id,
+  aspirante_id,
+  plaza_id,
+  orden_defecto,
+  orden_usuario,
+  bloqueada
+)
+select
+  ('ffffffff-0000-0000-0000-' || lpad(row_number() over()::text, 12, '0'))::uuid,
+  a.id,
+  p.id,
+  row_number() over (partition by a.id order by p.posicion),
+  null,
+  false
+from aspirante a
+join plaza p on p.convocatoria_id = a.convocatoria_id
+where a.convocatoria_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 on conflict (aspirante_id, plaza_id) do nothing;
-
