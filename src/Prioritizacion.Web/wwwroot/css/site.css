@@ -187,6 +187,10 @@ h1 { margin: 0 0 12px 0; font-size: 22px; }
   padding-bottom: 10px;
 }
 
+.admin-anti-forgery {
+  display: none;
+}
+
 .admin-tab {
   appearance: none;
   border: none;
