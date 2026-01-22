@@ -71,6 +71,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddSingleton<Db>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PrioritizacionService>();
+builder.Services.AddScoped<ConvocatoriaService>();
 
 var app = builder.Build();
 
