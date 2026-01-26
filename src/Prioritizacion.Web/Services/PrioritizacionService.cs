@@ -109,12 +109,23 @@ limit 1;";
             return (false, "No se puede reiniciar: convocatoria cerrada o ya enviada.");
         }
 
-        const string sql = @"
-update aspirante_plaza
-set orden_usuario = null
+        const string deleteSql = @"
+delete from aspirante_plaza
 where aspirante_id = @AspiranteId;";
 
-        await conn.ExecuteAsync(sql, new { AspiranteId = aspiranteId }, tx);
+        await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId }, tx);
+
+        const string insertSql = @"
+insert into aspirante_plaza (aspirante_id, plaza_id, orden_defecto)
+select
+  @AspiranteId,
+  p.id,
+  row_number() over (order by p.posicion)
+from plaza p
+join aspirante a on a.convocatoria_id = p.convocatoria_id
+where a.id = @AspiranteId;";
+
+        await conn.ExecuteAsync(insertSql, new { AspiranteId = aspiranteId }, tx);
         tx.Commit();
         return (true, null);
     }
