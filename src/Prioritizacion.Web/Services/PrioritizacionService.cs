@@ -22,6 +22,9 @@ select
   ap.plaza_id as PlazaId,
   p.base as Base,
   p.posicion as Posicion,
+  p.hores as Hores,
+  p.torn_x as TornX,
+  p.gfh_adjudicacio as GfhAdjudicacio,
   p.centro as Centre,
   coalesce(ap.orden_usuario, ap.orden_defecto) as Orden
 from aspirante_plaza ap
