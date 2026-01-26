@@ -181,7 +181,7 @@ h1 { margin: 0 0 12px 0; font-size: 22px; }
 .delete-button svg {
   width: 18px;
   height: 18px;
-  display: block;
+  fill: currentColor;
 }
 
 .delete-button:hover {

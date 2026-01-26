@@ -68,9 +68,9 @@ limit 1;";
         const string deleteSql = @"
 delete from aspirante_plaza
 where aspirante_id = @AspiranteId
-  and plaza_id not in (select unnest(@PlazaIds::uuid[]));";
+  and plaza_id not in @PlazaIds;";
 
-        await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
+        await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden }, tx);
 
         const string updSql = @"
 update aspirante_plaza
