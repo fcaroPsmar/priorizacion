@@ -73,7 +73,7 @@ set bloqueada = true,
 where aspirante_id = @AspiranteId
   and not (plaza_id = any(@PlazaIds));";
 
-           await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
+        await conn.ExecuteAsync(blockSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
 
         const string updSql = @"
         update aspirante_plaza
