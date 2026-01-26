@@ -52,6 +52,15 @@ public class PriorizarModel : PageModel
     public async Task<IActionResult> OnPostEnviarAsync()
     {
         var aspiranteId = AuthService.GetAspiranteId(User);
+        var ids = ParseIds(OrderedIds);
+        var (saved, saveError) = await _svc.GuardarOrdenAsync(aspiranteId, ids);
+        if (!saved)
+        {
+            Error = saveError;
+            await LoadAsync();
+            return Page();
+        }
+
         var (ok, error) = await _svc.EnviarAsync(aspiranteId);
         if (!ok)
         {
