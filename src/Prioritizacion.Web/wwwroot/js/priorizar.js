@@ -56,8 +56,6 @@
   list.addEventListener('click', (e) => {
     const deleteButton = e.target.closest('.delete-button');
     if (!deleteButton) return;
-    e.preventDefault();
-    e.stopPropagation();
     const li = deleteButton.closest('[data-plaza-id]');
     if (!li) return;
     li.remove();
