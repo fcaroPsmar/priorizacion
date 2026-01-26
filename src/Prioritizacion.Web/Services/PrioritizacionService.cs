@@ -65,6 +65,13 @@ limit 1;";
             return (false, "No se puede guardar: convocatoria cerrada o ya enviada.");
         }
 
+        const string deleteSql = @"
+delete from aspirante_plaza
+where aspirante_id = @AspiranteId
+  and not (plaza_id = any(@PlazaIds));";
+
+        await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
+
         const string updSql = @"
 update aspirante_plaza
 set orden_usuario = @Orden
