@@ -23,6 +23,7 @@
   }
 
   list.addEventListener('dragstart', (e) => {
+    if (e.target.closest('.delete-button')) return;
     const li = e.target.closest('[data-plaza-id]');
     if (!li) return;
     dragged = li;
@@ -50,6 +51,17 @@
     } else if (!next && li !== dragged.nextSibling) {
       list.insertBefore(dragged, li);
     }
+  });
+
+  list.addEventListener('click', (e) => {
+    const deleteButton = e.target.closest('.delete-button');
+    if (!deleteButton) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const li = deleteButton.closest('[data-plaza-id]');
+    if (!li) return;
+    li.remove();
+    renumber();
   });
 
   // Init

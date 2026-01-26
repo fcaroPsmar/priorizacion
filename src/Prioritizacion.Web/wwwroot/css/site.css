@@ -166,6 +166,28 @@ h1 { margin: 0 0 12px 0; font-size: 22px; }
   cursor: grab;
 }
 
+.delete-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.delete-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.delete-button:hover {
+  background: #fef2f2;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
