@@ -27,6 +27,7 @@ select
 from aspirante_plaza ap
 join plaza p on p.id = ap.plaza_id
 where ap.aspirante_id = @AspiranteId
+  and ap.bloqueada = false
 order by coalesce(ap.orden_usuario, ap.orden_defecto) asc;";
 
         var items = (await conn.QueryAsync<PriorizarItem>(sql, new { AspiranteId = aspiranteId })).ToList();
@@ -65,17 +66,20 @@ limit 1;";
             return (false, "No se puede guardar: convocatoria cerrada o ya enviada.");
         }
 
-        const string deleteSql = @"
-delete from aspirante_plaza
+        const string blockSql = @"
+update aspirante_plaza
+set bloqueada = true,
+    orden_usuario = null
 where aspirante_id = @AspiranteId
-  and plaza_id not in @PlazaIds;";
+  and not (plaza_id = any(@PlazaIds));";
 
-        await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden }, tx);
+        await conn.ExecuteAsync(blockSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
 
         const string updSql = @"
-update aspirante_plaza
-set orden_usuario = @Orden
-where aspirante_id = @AspiranteId and plaza_id = @PlazaId;";
+        update aspirante_plaza
+        set orden_usuario = @Orden,
+            bloqueada = false
+        where aspirante_id = @AspiranteId and plaza_id = @PlazaId;";
 
         for (var i = 0; i < plazaIdsEnOrden.Count; i++)
         {
@@ -111,7 +115,8 @@ limit 1;";
 
         const string sql = @"
 update aspirante_plaza
-set orden_usuario = null
+set orden_usuario = null,
+    bloqueada = false
 where aspirante_id = @AspiranteId;";
 
         await conn.ExecuteAsync(sql, new { AspiranteId = aspiranteId }, tx);
