@@ -23,19 +23,6 @@ create table if not exists aspirante (
   primer_cognom text null,
   segon_cognom text null,
   nom text null,
-  torn_y text null,
-  experiencia numeric null,
-  unnamed_9 numeric null,
-  barem_personal numeric null,
-  unnamed_11 numeric null,
-  qualificacio numeric null,
-  unnamed_13 numeric null,
-  total numeric null,
-  ficher_aspirant text null,
-  pond_exp numeric null,
-  pond_barem numeric null,
-  prova_competencial numeric null,
-  pond_prova numeric null,
   enviado_en timestamptz null,
   creado_en timestamptz not null default now(),
   unique (convocatoria_id, email)
@@ -47,19 +34,6 @@ alter table aspirante add column if not exists dni_nie_emmascarat text null;
 alter table aspirante add column if not exists primer_cognom text null;
 alter table aspirante add column if not exists segon_cognom text null;
 alter table aspirante add column if not exists nom text null;
-alter table aspirante add column if not exists torn_y text null;
-alter table aspirante add column if not exists experiencia numeric null;
-alter table aspirante add column if not exists unnamed_9 numeric null;
-alter table aspirante add column if not exists barem_personal numeric null;
-alter table aspirante add column if not exists unnamed_11 numeric null;
-alter table aspirante add column if not exists qualificacio numeric null;
-alter table aspirante add column if not exists unnamed_13 numeric null;
-alter table aspirante add column if not exists total numeric null;
-alter table aspirante add column if not exists ficher_aspirant text null;
-alter table aspirante add column if not exists pond_exp numeric null;
-alter table aspirante add column if not exists pond_barem numeric null;
-alter table aspirante add column if not exists prova_competencial numeric null;
-alter table aspirante add column if not exists pond_prova numeric null;
 
 create table if not exists aspirante_token (
   id uuid primary key default gen_random_uuid(),
@@ -99,11 +73,8 @@ create table if not exists aspirante_plaza (
   orden_usuario int null,
   bloqueada boolean not null default false,
   experiencia numeric null,
-  unnamed_9 numeric null,
   barem_personal numeric null,
-  unnamed_11 numeric null,
   qualificacio numeric null,
-  unnamed_13 numeric null,
   total numeric null,
   ficher_aspirant text null,
   pond_exp numeric null,
@@ -116,11 +87,8 @@ create table if not exists aspirante_plaza (
 );
 
 alter table aspirante_plaza add column if not exists experiencia numeric null;
-alter table aspirante_plaza add column if not exists unnamed_9 numeric null;
 alter table aspirante_plaza add column if not exists barem_personal numeric null;
-alter table aspirante_plaza add column if not exists unnamed_11 numeric null;
 alter table aspirante_plaza add column if not exists qualificacio numeric null;
-alter table aspirante_plaza add column if not exists unnamed_13 numeric null;
 alter table aspirante_plaza add column if not exists total numeric null;
 alter table aspirante_plaza add column if not exists ficher_aspirant text null;
 alter table aspirante_plaza add column if not exists pond_exp numeric null;
