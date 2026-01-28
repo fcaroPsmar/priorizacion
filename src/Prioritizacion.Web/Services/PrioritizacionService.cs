@@ -76,7 +76,7 @@ set bloqueada = true,
 where aspirante_id = @AspiranteId
   and not (plaza_id = any(@PlazaIds));";
 
-           await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
+        await conn.ExecuteAsync(blockSql, new { AspiranteId = aspiranteId, PlazaIds = plazaIdsEnOrden.ToArray() }, tx);
 
         const string updSql = @"
         update aspirante_plaza
@@ -116,21 +116,43 @@ limit 1;";
             return (false, "No se puede reiniciar: convocatoria cerrada o ya enviada.");
         }
 
-        const string deleteSql = @"
-delete from aspirante_plaza
-where aspirante_id = @AspiranteId;";
+        const string resetSql = @"
+with ordenadas as (
+  select
+    p.id,
+    row_number() over (order by p.posicion) as orden_defecto
+  from plaza p
+  join aspirante a on a.convocatoria_id = p.convocatoria_id
+  where a.id = @AspiranteId
+)
+update aspirante_plaza ap
+set orden_usuario = null,
+    orden_defecto = ordenadas.orden_defecto
+from ordenadas
+where ap.aspirante_id = @AspiranteId
+  and ap.plaza_id = ordenadas.id;";
 
-        await conn.ExecuteAsync(deleteSql, new { AspiranteId = aspiranteId }, tx);
+        await conn.ExecuteAsync(resetSql, new { AspiranteId = aspiranteId }, tx);
 
         const string insertSql = @"
+with ordenadas as (
+  select
+    p.id,
+    row_number() over (order by p.posicion) as orden_defecto
+  from plaza p
+  join aspirante a on a.convocatoria_id = p.convocatoria_id
+  where a.id = @AspiranteId
+)
 insert into aspirante_plaza (aspirante_id, plaza_id, orden_defecto)
 select
   @AspiranteId,
-  p.id,
-  row_number() over (order by p.posicion)
-from plaza p
-join aspirante a on a.convocatoria_id = p.convocatoria_id
-where a.id = @AspiranteId;";
+  ordenadas.id,
+  ordenadas.orden_defecto
+from ordenadas
+left join aspirante_plaza ap
+  on ap.aspirante_id = @AspiranteId
+  and ap.plaza_id = ordenadas.id
+where ap.id is null;";
 
         await conn.ExecuteAsync(insertSql, new { AspiranteId = aspiranteId }, tx);
         tx.Commit();
