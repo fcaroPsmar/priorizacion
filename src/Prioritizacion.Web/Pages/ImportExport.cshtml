@@ -1,0 +1,126 @@
+@page
+@model ImportExportModel
+@{
+  ViewData["Title"] = "Importar/Exportar";
+}
+
+<section class="admin">
+  <nav class="admin-tabs" aria-label="Secciones del panel de administración">
+    <a class="admin-tab" href="/Admin">
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <line x1="8" y1="3" x2="8" y2="21" />
+          <line x1="3" y1="8" x2="21" y2="8" />
+        </svg>
+      </span>
+      Convocatorias
+    </a>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c1.7-3.5 5-5 8-5s6.3 1.5 8 5" />
+        </svg>
+      </span>
+      Aspirantes
+    </button>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l4 8h-8l4-8z" />
+          <circle cx="12" cy="16" r="6" />
+        </svg>
+      </span>
+      Aspirante-Plaza
+    </button>
+    <a class="admin-tab is-active" href="/ImportExport">
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5" />
+          <path d="M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6" />
+        </svg>
+      </span>
+      Importar/Exportar
+    </a>
+    <button class="admin-tab" type="button" disabled>
+      <span class="admin-tab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="19" x2="20" y2="19" />
+          <rect x="6" y="11" width="3" height="6" rx="1" />
+          <rect x="11" y="7" width="3" height="10" rx="1" />
+          <rect x="16" y="4" width="3" height="13" rx="1" />
+        </svg>
+      </span>
+      Reportes
+    </button>
+  </nav>
+
+  <div class="card import-export">
+    <div class="import-export__header">
+      <div>
+        <h1>Importar y Exportar Datos</h1>
+        <p class="muted">Gestiona la importación desde Excel y la exportación de convocatorias.</p>
+      </div>
+    </div>
+
+    <div class="import-export__grid">
+      <section class="import-card">
+        <div class="import-card__icon import-card__icon--export" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+            <polyline points="14 3 14 8 19 8" />
+            <path d="M12 12v6" />
+            <path d="M9 15l3 3 3-3" />
+          </svg>
+        </div>
+        <div class="import-card__content">
+          <h2>Exportar Datos del Sistema</h2>
+          <p class="muted">Descarga todos los datos en formato Excel.</p>
+        </div>
+        <button class="btn" type="button" disabled>Exportar Excel</button>
+      </section>
+
+      <section class="import-card">
+        <div class="import-card__icon import-card__icon--import" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12" />
+            <path d="m7 10 5 5 5-5" />
+            <rect x="3" y="16" width="18" height="5" rx="2" />
+          </svg>
+        </div>
+        <div class="import-card__content">
+          <h2>Importar Convocatoria desde Excel</h2>
+          <p class="muted">Carga el Excel para crear aspirantes, plazas y relaciones automáticamente.</p>
+        </div>
+        <form class="import-card__form" method="post" enctype="multipart/form-data">
+          @Html.AntiForgeryToken()
+          <label class="admin-form__field">
+            <span>Convocatoria</span>
+            <select name="SelectedConvocatoriaId" required>
+              <option value="">-- Selecciona una convocatoria --</option>
+              @foreach (var convocatoria in Model.Convocatorias)
+              {
+                <option value="@convocatoria.Id" selected="@(Model.SelectedConvocatoriaId == convocatoria.Id)">
+                  @convocatoria.Codigo - @convocatoria.Nombre
+                </option>
+              }
+            </select>
+          </label>
+          <label class="admin-form__field">
+            <span>Fichero Excel</span>
+            <input type="file" name="ExcelFile" accept=".xlsx,.xls" required />
+          </label>
+          <button class="btn" type="submit">Importar Excel</button>
+        </form>
+        @if (Model.Result is not null)
+        {
+          <div class="import-card__result @(Model.Result.Success ? "is-success" : "is-error")">
+            @Model.Result.Message
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</section>
