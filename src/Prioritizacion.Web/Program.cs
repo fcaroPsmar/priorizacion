@@ -12,6 +12,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizePage("/Priorizar");
     options.Conventions.AuthorizePage("/Confirmacion");
     options.Conventions.AuthorizePage("/Admin", "AdminOnly");
+    options.Conventions.AuthorizePage("/ImportExport", "AdminOnly");
 });
 
 var cookieName = builder.Configuration["Auth:SessionCookieName"] ?? "hdm_priorizacion_session";
@@ -72,6 +73,7 @@ builder.Services.AddSingleton<Db>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PrioritizacionService>();
 builder.Services.AddScoped<ConvocatoriaService>();
+builder.Services.AddScoped<ImportExcelService>();
 
 var app = builder.Build();
 
