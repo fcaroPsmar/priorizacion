@@ -307,7 +307,7 @@
       }
 
       const action = button.dataset.action;
-      const id = Number(button.dataset.id);
+      const id = button.dataset.id;
       const rowIndex = convocatorias.findIndex((row) => row.id === id);
       if (rowIndex === -1) {
         return;
@@ -338,7 +338,7 @@
       openForm();
     });
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!formName.value.trim() || !formStartDate.value || !formEndDate.value) {
         alert("Nombre, fecha inicio y fecha fin son obligatorios.");
