@@ -75,35 +75,16 @@
     <form class="admin-form is-hidden" id="convocatoriaForm">
       <div class="admin-form__grid">
         <label class="admin-form__field">
-          <span>Código</span>
-          <input type="text" id="formCode" placeholder="CONV-2026-003" required />
-        </label>
-        <label class="admin-form__field">
-          <span>Nombre</span>
+          <span>Nombre convocatoria</span>
           <input type="text" id="formName" placeholder="Nombre de la convocatoria" required />
         </label>
         <label class="admin-form__field">
           <span>Fecha inicio</span>
-          <input type="date" id="formStartDate" />
+          <input type="date" id="formStartDate" required />
         </label>
         <label class="admin-form__field">
           <span>Fecha fin</span>
-          <input type="date" id="formEndDate" />
-        </label>
-        <label class="admin-form__field">
-          <span>Activa</span>
-          <select id="formActive">
-            <option value="Sí">Sí</option>
-            <option value="No">No</option>
-          </select>
-        </label>
-        <label class="admin-form__field">
-          <span>Acceso desde</span>
-          <input type="date" id="formAccessFrom" />
-        </label>
-        <label class="admin-form__field">
-          <span>Acceso hasta</span>
-          <input type="date" id="formAccessTo" />
+          <input type="date" id="formEndDate" required />
         </label>
       </div>
       <div class="admin-form__actions">
@@ -196,13 +177,9 @@
     const saveButton = document.getElementById("saveConvocatoria");
     const cancelButton = document.getElementById("cancelConvocatoria");
     const createButton = document.getElementById("createConvocatoria");
-    const formCode = document.getElementById("formCode");
     const formName = document.getElementById("formName");
     const formStartDate = document.getElementById("formStartDate");
     const formEndDate = document.getElementById("formEndDate");
-    const formActive = document.getElementById("formActive");
-    const formAccessFrom = document.getElementById("formAccessFrom");
-    const formAccessTo = document.getElementById("formAccessTo");
     let editingId = null;
 
     const normalize = (value) => String(value ?? "").toLowerCase();
@@ -290,20 +267,15 @@
 
     const resetForm = () => {
       form.reset();
-      formActive.value = "Sí";
       editingId = null;
     };
 
     const openForm = (row) => {
       form.classList.remove("is-hidden");
       if (row) {
-        formCode.value = row.code;
         formName.value = row.name;
         formStartDate.value = row.startDate;
         formEndDate.value = row.endDate;
-        formActive.value = row.active;
-        formAccessFrom.value = row.accessFrom;
-        formAccessTo.value = row.accessTo;
         editingId = row.id;
         saveButton.textContent = "Actualizar";
       } else {
@@ -335,7 +307,7 @@
       }
 
       const action = button.dataset.action;
-      const id = Number(button.dataset.id);
+      const id = button.dataset.id;
       const rowIndex = convocatorias.findIndex((row) => row.id === id);
       if (rowIndex === -1) {
         return;
@@ -366,22 +338,18 @@
       openForm();
     });
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!formCode.value.trim() || !formName.value.trim()) {
-        alert("Código y nombre son obligatorios.");
+      if (!formName.value.trim() || !formStartDate.value || !formEndDate.value) {
+        alert("Nombre, fecha inicio y fecha fin son obligatorios.");
         return;
       }
 
       const payload = {
         id: editingId,
-        codigo: formCode.value.trim(),
         nombre: formName.value.trim(),
-        fechaInicio: formStartDate.value || null,
-        fechaFin: formEndDate.value || null,
-        activa: formActive.value === "Sí",
-        accesoDesde: formAccessFrom.value || null,
-        accesoHasta: formAccessTo.value || null
+        fechaInicio: formStartDate.value,
+        fechaFin: formEndDate.value
       };
 
       const handler = editingId ? "Update" : "Create";
