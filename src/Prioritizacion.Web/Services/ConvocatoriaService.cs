@@ -49,7 +49,18 @@ returning
   acceso_desde as AccesoDesde,
   acceso_hasta as AccesoHasta;";
 
-        return await conn.QuerySingleAsync<Convocatoria>(sql, input);
+        var payload = new
+        {
+            Codigo = BuildCodigo(),
+            Nombre = input.Nombre,
+            input.FechaInicio,
+            input.FechaFin,
+            Activa = true,
+            AccesoDesde = input.FechaInicio,
+            AccesoHasta = input.FechaFin
+        };
+
+        return await conn.QuerySingleAsync<Convocatoria>(sql, payload);
     }
 
     public async Task<Convocatoria?> UpdateAsync(Guid id, ConvocatoriaInput input)
@@ -57,8 +68,7 @@ returning
         using var conn = _db.OpenConnection();
         const string sql = @"
 update convocatoria
-set codigo = @Codigo,
-    nombre = @Nombre,
+set nombre = @Nombre,
     fecha_inicio = @FechaInicio,
     fecha_fin = @FechaFin,
     activa = @Activa,
@@ -78,13 +88,12 @@ returning
         return await conn.QuerySingleOrDefaultAsync<Convocatoria>(sql, new
         {
             Id = id,
-            input.Codigo,
             input.Nombre,
             input.FechaInicio,
             input.FechaFin,
-            input.Activa,
-            input.AccesoDesde,
-            input.AccesoHasta
+            Activa = true,
+            AccesoDesde = input.FechaInicio,
+            AccesoHasta = input.FechaFin
         });
     }
 
@@ -95,14 +104,16 @@ returning
         var rows = await conn.ExecuteAsync(sql, new { Id = id });
         return rows > 0;
     }
+
+    private static string BuildCodigo()
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+        return $"CONV-{DateTime.UtcNow:yyyyMMddHHmmss}-{suffix}";
+    }
 }
 
 public sealed record ConvocatoriaInput(
-    string Codigo,
     string Nombre,
-    DateTime? FechaInicio,
-    DateTime? FechaFin,
-    bool Activa,
-    DateTime? AccesoDesde,
-    DateTime? AccesoHasta
+    DateTime FechaInicio,
+    DateTime FechaFin
 );
