@@ -28,7 +28,7 @@ public class AdminModel : PageModel
     public async Task<IActionResult> OnPostCreateAsync([FromBody] ConvocatoriaRequest request)
     {
         if (!IsValidRequest(request))
-            return BadRequest("Código y nombre son obligatorios.");
+            return BadRequest("Nombre, fecha inicio y fecha fin son obligatorios.");
 
         var created = await _convocatoriaService.CreateAsync(ToInput(request));
         return new JsonResult(created);
@@ -40,7 +40,7 @@ public class AdminModel : PageModel
             return BadRequest("Id es obligatorio.");
 
         if (!IsValidRequest(request))
-            return BadRequest("Código y nombre son obligatorios.");
+            return BadRequest("Nombre, fecha inicio y fecha fin son obligatorios.");
 
         var updated = await _convocatoriaService.UpdateAsync(request.Id.Value, ToInput(request));
         if (updated is null)
@@ -59,22 +59,19 @@ public class AdminModel : PageModel
     }
 
     private static bool IsValidRequest(ConvocatoriaRequest request)
-        => !string.IsNullOrWhiteSpace(request.Codigo) && !string.IsNullOrWhiteSpace(request.Nombre);
+        => !string.IsNullOrWhiteSpace(request.Nombre)
+           && request.FechaInicio.HasValue
+           && request.FechaFin.HasValue;
 
     private static ConvocatoriaInput ToInput(ConvocatoriaRequest request)
-        => new(request.Codigo.Trim(), request.Nombre.Trim(), request.FechaInicio, request.FechaFin, request.Activa,
-            request.AccesoDesde, request.AccesoHasta);
+        => new(request.Nombre.Trim(), request.FechaInicio!.Value, request.FechaFin!.Value);
 }
 
 public sealed record ConvocatoriaRequest(
     Guid? Id,
-    string Codigo,
     string Nombre,
     DateTime? FechaInicio,
-    DateTime? FechaFin,
-    bool Activa,
-    DateTime? AccesoDesde,
-    DateTime? AccesoHasta
+    DateTime? FechaFin
 );
 
 public sealed record ConvocatoriaDeleteRequest(Guid Id);
