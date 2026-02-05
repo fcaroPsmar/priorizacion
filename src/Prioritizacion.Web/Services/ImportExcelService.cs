@@ -1,5 +1,6 @@
 using System.Data;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using ClosedXML.Excel;
 using Dapper;
@@ -91,6 +92,11 @@ public sealed class ImportExcelService
             return new ImportResult(false, "Debes seleccionar un fichero Excel válido.");
         }
 
+        if (!IsExcelContentType(file.ContentType) || !HasValidExtension(file.FileName))
+        {
+            return new ImportResult(false, "El fichero debe ser un Excel válido.");
+        }
+
         using var stream = file.OpenReadStream();
         using var workbook = new XLWorkbook(stream);
         var worksheet = workbook.Worksheets.FirstOrDefault();
@@ -131,6 +137,11 @@ public sealed class ImportExcelService
             }
 
             rowCount++;
+            if (rowCount > 5000)
+            {
+                tx.Rollback();
+                return new ImportResult(false, "El Excel supera el límite de 5000 filas.");
+            }
 
             var convocatoriaId = ReadGuid(row, columns, "convocatoria_id") ?? defaultConvocatoriaId;
             if (convocatoriaId is null || convocatoriaId == Guid.Empty)
@@ -145,6 +156,18 @@ public sealed class ImportExcelService
             {
                 tx.Rollback();
                 return new ImportResult(false, $"La fila {row.RowNumber()} no tiene DNI/NIE ni correo electrónico.");
+            }
+
+            if (!IsValidIdentifier(dniNie))
+            {
+                tx.Rollback();
+                return new ImportResult(false, $"La fila {row.RowNumber()} tiene un DNI/NIE inválido.");
+            }
+
+            if (!IsValidEmail(email))
+            {
+                tx.Rollback();
+                return new ImportResult(false, $"La fila {row.RowNumber()} tiene un correo inválido.");
             }
 
             var basePlaza = ReadString(row, columns, "base");
@@ -348,6 +371,60 @@ public sealed class ImportExcelService
     {
         var key = !string.IsNullOrWhiteSpace(dniNie) ? dniNie.Trim().ToUpperInvariant() : email ?? "";
         return $"{convocatoriaId:N}|{key}";
+    }
+
+    private static bool IsExcelContentType(string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return false;
+        }
+
+        return contentType.Equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", StringComparison.OrdinalIgnoreCase)
+            || contentType.Equals("application/vnd.ms-excel", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasValidExtension(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(fileName);
+        return extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".xls", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsValidIdentifier(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Length > 20)
+        {
+            return false;
+        }
+
+        return trimmed.All(ch => char.IsLetterOrDigit(ch) || ch == '-' || ch == '_');
+    }
+
+    private static bool IsValidEmail(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        if (value.Length > 254)
+        {
+            return false;
+        }
+
+        return System.Net.Mail.MailAddress.TryCreate(value, out _);
     }
 
     private async Task<AspiranteResult> GetOrCreateAspiranteAsync(

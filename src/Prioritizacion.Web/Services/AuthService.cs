@@ -6,6 +6,12 @@ namespace Prioritizacion.Web.Services;
 
 public sealed class AuthService
 {
+    private const int MaxEmailLength = 254;
+    private const int MaxCodeLength = 32;
+    private const int MaxFailedAttempts = 5;
+    private static readonly System.Text.RegularExpressions.Regex EmailRegex = new(
+        @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+        System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
     private readonly Db _db;
 
     public AuthService(Db db)
@@ -21,7 +27,24 @@ public sealed class AuthService
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(codigo))
             return (null, "Debes indicar correo y código.");
 
+        if (email.Length > MaxEmailLength || codigo.Length > MaxCodeLength)
+            return (null, "Credenciales inválidas.");
+
+        if (!EmailRegex.IsMatch(email) || !System.Net.Mail.MailAddress.TryCreate(email, out _))
+            return (null, "Correo electrónico inválido.");
+
         using var conn = _db.OpenConnection();
+
+        const string attemptsSql = @"
+select intentos_fallidos
+from aspirante_token
+where codigo = @Codigo
+limit 1;";
+        var failedAttempts = await conn.ExecuteScalarAsync<int?>(attemptsSql, new { Codigo = codigo });
+        if (failedAttempts is >= MaxFailedAttempts)
+        {
+            return (null, "El código se ha bloqueado por demasiados intentos fallidos.");
+        }
 
         // Validación: token válido + convocatoria abierta + aspirante no enviado
         const string sql = @"
