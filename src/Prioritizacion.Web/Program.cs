@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Prioritizacion.Web.Data;
 using Prioritizacion.Web.Services;
@@ -13,6 +15,16 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizePage("/Confirmacion");
     options.Conventions.AuthorizePage("/Admin", "AdminOnly");
     options.Conventions.AuthorizePage("/ImportExport", "AdminOnly");
+    options.Conventions.ConfigureFilter(new AutoValidateAntiforgeryTokenAttribute());
+});
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = "hdm_csrf";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
 var cookieName = builder.Configuration["Auth:SessionCookieName"] ?? "hdm_priorizacion_session";
@@ -28,6 +40,9 @@ builder.Services
     .AddCookie(options =>
     {
         options.Cookie.Name = cookieName;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.LoginPath = "/Login";
         options.AccessDeniedPath = "/Login";
         options.SlidingExpiration = true;
@@ -37,6 +52,9 @@ builder.Services
     .AddCookie(adminCookieScheme, options =>
     {
         options.Cookie.Name = "hdm_admin_auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
         options.LoginPath = "/Admin";
         options.AccessDeniedPath = "/Admin";
         options.SlidingExpiration = true;
@@ -77,11 +95,45 @@ builder.Services.AddScoped<ImportExcelService>();
 
 var app = builder.Build();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers[HeaderNames.XContentTypeOptions] = "nosniff";
+    context.Response.Headers[HeaderNames.XFrameOptions] = "DENY";
+    context.Response.Headers[HeaderNames.ReferrerPolicy] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
+    context.Response.Headers[HeaderNames.ContentSecurityPolicy] =
+        "default-src 'self'; " +
+        "base-uri 'self'; " +
+        "form-action 'self'; " +
+        "frame-ancestors 'none'; " +
+        "img-src 'self' data:; " +
+        "script-src 'self'; " +
+        "style-src 'self' 'unsafe-inline'";
+    await next();
+});
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
 app.UseRouting();
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    await next();
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        context.Response.Headers[HeaderNames.CacheControl] = "no-store, no-cache";
+        context.Response.Headers[HeaderNames.Pragma] = "no-cache";
+        context.Response.Headers[HeaderNames.Expires] = "0";
+    }
+});
 app.UseAuthorization();
 
 app.MapRazorPages();
