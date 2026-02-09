@@ -31,6 +31,7 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
 
+
 });
 
 var cookieName = builder.Configuration["Auth:SessionCookieName"] ?? "hdm_priorizacion_session";
@@ -59,6 +60,7 @@ builder.Services
     {
         options.Cookie.Name = "hdm_admin_auth";
         options.Cookie.HttpOnly = true;
+
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
         options.LoginPath = "/Admin";
@@ -144,8 +146,13 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseForwardedHeaders();
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseForwardedHeaders();
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 
 app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
