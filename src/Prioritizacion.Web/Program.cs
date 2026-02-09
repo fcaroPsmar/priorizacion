@@ -27,8 +27,11 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.Name = "hdm_csrf";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = cookieSecurePolicy;
-    options.Cookie.SameSite = SameSiteMode.Lax;
+
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+
+
 });
 
 var cookieName = builder.Configuration["Auth:SessionCookieName"] ?? "hdm_priorizacion_session";
@@ -45,8 +48,8 @@ builder.Services
     {
         options.Cookie.Name = cookieName;
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = cookieSecurePolicy;
-        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
         options.LoginPath = "/Login";
         options.AccessDeniedPath = "/Login";
         options.SlidingExpiration = true;
@@ -57,8 +60,9 @@ builder.Services
     {
         options.Cookie.Name = "hdm_admin_auth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = cookieSecurePolicy;
-        options.Cookie.SameSite = SameSiteMode.Lax;
+
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
         options.LoginPath = "/Admin";
         options.AccessDeniedPath = "/Admin";
         options.SlidingExpiration = true;
@@ -130,8 +134,7 @@ app.Use(async (context, next) =>
 {
     context.Response.Headers[HeaderNames.XContentTypeOptions] = "nosniff";
     context.Response.Headers[HeaderNames.XFrameOptions] = "DENY";
-    context.Response.Headers[HeaderNames.ReferrerPolicy] = "strict-origin-when-cross-origin";
-    context.Response.Headers[HeaderNames.PermissionsPolicy] = "geolocation=(), microphone=(), camera=()";
+    context.Response.Headers[HeaderNames.Referer] = "strict-origin-when-cross-origin";
     context.Response.Headers[HeaderNames.ContentSecurityPolicy] =
         "default-src 'self'; " +
         "base-uri 'self'; " +
@@ -143,11 +146,13 @@ app.Use(async (context, next) =>
     await next();
 });
 
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseForwardedHeaders();
     app.UseHttpsRedirection();
 }
+
 app.UseStaticFiles();
 
 app.UseStatusCodePagesWithReExecute("/Error", "?statusCode={0}");
