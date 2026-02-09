@@ -27,8 +27,10 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.Name = "hdm_csrf";
     options.Cookie.HttpOnly = true;
+
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+
 });
 
 var cookieName = builder.Configuration["Auth:SessionCookieName"] ?? "hdm_priorizacion_session";
