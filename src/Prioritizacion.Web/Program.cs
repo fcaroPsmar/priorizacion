@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -7,6 +8,9 @@ using Prioritizacion.Web.Data;
 using Prioritizacion.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var cookieSecurePolicy = builder.Environment.IsDevelopment()
+    ? CookieSecurePolicy.SameAsRequest
+    : CookieSecurePolicy.Always;
 
 builder.Services.AddRazorPages(options =>
 {
@@ -92,6 +96,27 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PrioritizacionService>();
 builder.Services.AddScoped<ConvocatoriaService>();
 builder.Services.AddScoped<ImportExcelService>();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+builder.Services.AddHttpsRedirection(options =>
+{
+    if (int.TryParse(builder.Configuration["Kestrel:Endpoints:Https:Port"], out var httpsPort))
+    {
+        options.HttpsPort = httpsPort;
+    }
+    else if (int.TryParse(builder.Configuration["HttpsRedirection:HttpsPort"], out var redirectPort))
+    {
+        options.HttpsPort = redirectPort;
+    }
+    else
+    {
+        options.HttpsPort = 443;
+    }
+});
 
 var app = builder.Build();
 
@@ -117,6 +142,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
